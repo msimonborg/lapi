@@ -1,0 +1,11 @@
+<%= "LAPI.configure '#{name}' do |config|" %>
+  <%= "config.base_uri = '#{uri}'" if uri %>
+<% resources.each do |resource| %>
+  <%= "config.add_resource :#{resource.to_sym} do" %>
+    <%= "add_params # 'comma', 'separated', 'params'" %>
+    <%= "add_attributes # 'comma', 'separated', 'attributes'" %>
+    <%= "add_scopes # scope_name: -> { where some_condition: 'is met' }," %>
+    <%= "           # second_scope: -> { where { |x| x.condition > 1_000_000 } }" %>
+  <%= "end" %>
+<% end %>
+<%= "end" %>

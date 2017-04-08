@@ -2,7 +2,10 @@
 
 require 'lazy_record'
 
+require 'a_pee_eye/param'
 require 'a_pee_eye/parser'
+require 'a_pee_eye/request'
+require 'a_pee_eye/resource'
 require 'a_pee_eye/response'
 require 'a_pee_eye/response_object'
 require 'a_pee_eye/version'
@@ -18,9 +21,9 @@ module APeeEye
     api.extend(API)
     yield api if block_given?
     api.const_set('RESOURCES', api.resources)
-    api.create_response_objects
     api.create_response_class
-    api.create_parser
+    api.create_parser_class
+    api.create_request_class
     api
   end
 
@@ -37,21 +40,35 @@ module APeeEye
     end
 
     def add_resource(plural, singular = nil)
-      add_inflection(plural, singular) if singular
       @resources ||= []
       @resources << plural.to_sym
+      add_inflection(plural, singular) if singular
+      resource_builder = ResourceBuilder.new
+      yield resource_builder if block_given?
+      response_object = const_set(plural.to_s.classify, Class.new(ResponseObject))
+      response_object.const_set('API_MODULE', self)
+      response_object.class_eval do
+        lr_attr_accessor *resource_builder.attributes
+        lr_has_many *resource_builder.children
+        resource_builder.scopes.each do |k, v|
+          lr_scope k, v
+        end
+      end
+      resource_object = const_set(plural.to_s.camelize, Class.new(Resource))
+      resource_object.class_eval do
+        resource_builder.params.each do |param|
+          define_method "#{param}=" do |value|
+            instance_variable_set("@#{param}", Param.new(param.to_sym, value))
+            self.class.send(:params) << instance_variable_get("@#{param}")
+          end
+        end
+        self.class.send(:attr_reader, *resource_builder.params)
+      end
     end
 
     def add_inflection(plural, singular)
       ActiveSupport::Inflector.inflections do |inflect|
         inflect.irregular singular, plural
-      end
-    end
-
-    def create_response_objects
-      resources.each do |resource|
-        klass = const_set(resource.to_s.classify, Class.new(ResponseObject))
-        klass.const_set('API_MODULE', self)
       end
     end
 
@@ -61,8 +78,13 @@ module APeeEye
       klass.const_set('API_MODULE', self)
     end
 
-    def create_parser
+    def create_parser_class
       klass = const_set('Parser', Class.new(Parser))
+      klass.const_set('API_MODULE', self)
+    end
+
+    def create_request_class
+      klass = const_set('Request', Class.new(Request))
       klass.const_set('API_MODULE', self)
     end
 
@@ -72,17 +94,61 @@ module APeeEye
       elsif resource.to_s.include? base_uri
         request_object = { base_url: resource }
       else
-        resource = Request.build(resource, id)
+        resource = self::Request.build(resource, id)
         yield resource if block_given?
         request_object = { base_url: base_uri, resource: resource }
       end
-      Response.new request_object
+      self::Response.new request_object
+    end
+
+    class ResourceBuilder
+      def params
+        @params ||= []
+      end
+
+      def attributes
+        @attributes ||= []
+      end
+
+      def children
+        @has_many ||= []
+      end
+
+      def scopes
+        @scopes ||= {}
+      end
+
+      def add_params(*args)
+        @params = args
+      end
+
+      def add_attributes(*args)
+        @attributes = args
+      end
+
+      def has_many(*args)
+        @has_many = args
+      end
+
+      def add_scopes(**args)
+        @scopes = args
+      end
     end
   end
 end
 
-APeeEye.configure('Dog') do |dog|
-  dog.base_uri = 'hello'
-  dog.add_resource('cats')
-  dog.add_resource('buffalo', 'cowboy')
+APeeEye.configure('PYR') do |pyr|
+  pyr.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
+
+  pyr.add_resource('reps') do |reps|
+    reps.add_params 'address', 'lat', 'long'
+    reps.add_attributes 'self', 'official_full', 'party'
+    reps.has_many 'office_locations'
+    reps.add_scopes democratic: -> { where party: 'Democrat' },
+                    republican: -> { where party: 'Republican' }
+  end
+
+  pyr.add_resource('office_locations') do |off|
+    off.add_attributes 'self', 'city'
+  end
 end

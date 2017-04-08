@@ -35,7 +35,7 @@ module APeeEye
     end
 
     def parse_objects
-      @objects = const_get('API_MODULE::Parser').parse(body, controller)
+      @objects = self.class.send(:const_get, 'API_MODULE::Parser').parse(body, controller)
     end
   end
 end

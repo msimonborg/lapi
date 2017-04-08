@@ -2,6 +2,8 @@
 
 require 'lazy_record'
 
+require 'a_pee_eye/parser'
+require 'a_pee_eye/response'
 require 'a_pee_eye/response_object'
 require 'a_pee_eye/version'
 
@@ -17,7 +19,8 @@ module APeeEye
     yield api if block_given?
     api.const_set('RESOURCES', api.resources)
     api.create_response_objects
-    # api.create_resource_objects
+    api.create_response_class
+    api.create_parser
     api
   end
 
@@ -50,6 +53,17 @@ module APeeEye
         klass = const_set(resource.to_s.classify, Class.new(ResponseObject))
         klass.const_set('API_MODULE', self)
       end
+    end
+
+    def create_response_class
+      klass = const_set('Response', Class.new(Response))
+      klass.const_set('BASE_URI', base_uri)
+      klass.const_set('API_MODULE', self)
+    end
+
+    def create_parser
+      klass = const_set('Parser', Class.new(Parser))
+      klass.const_set('API_MODULE', self)
     end
 
     def call(resource, id = nil)

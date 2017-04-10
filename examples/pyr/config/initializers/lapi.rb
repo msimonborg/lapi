@@ -37,7 +37,8 @@ LAPI.new :pyr do |api|
     add_scopes democratic: -> { where party: 'Democrat' },
                republican: -> { where party: 'Republican' },
                senators: -> { where role: 'United States Senator' },
-               representatives: -> { where role: 'United States Representative' }
+               representatives: -> { where role: 'United States Representative' },
+               state: ->(name) { where { |x| x.state.name == name } }
   end
 
   api.add_resource('office_locations') do

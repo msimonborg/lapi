@@ -10,12 +10,12 @@
 <%= "    #" %>
 <%= "    # add_attributes 'comma', 'separated', 'attributes'" %>
 <%= "    #" %>
-<%= "    # add_collections 'plural'" %>
+<%= "    # add_collections 'plural', 'names'" %>
 <%= "    #" %>
-<%= "    # add_aliases 'singular'" %>
+<%= "    # add_aliases 'singular', 'names'" %>
 <%= "    #" %>
 <%= "    # add_scopes scope_name: -> { where some_condition: 'is met' }," %>
-<%= "    #            second_scope: -> { where { |x| x.condition > 1_000_000 } }" %>
+<%= "    #            second_scope: ->(is_met) { where { |x| x.condition == is_met } }" %>
 <%= "  end" %>
 <% end %>
 <%= "end" %>

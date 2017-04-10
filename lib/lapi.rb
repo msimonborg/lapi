@@ -11,40 +11,75 @@ require 'lapi/response_object'
 require 'lapi/version'
 
 module LAPI
-  def self.configure(string)
-    api_name = string.camelize
-    api = if const_defined?(api_name)
-            const_get(api_name)
-          else
-            const_set(api_name, Module.new)
-          end
+  module_function
+
+  def new(name)
+    api_name = name.to_s.camelize
+    api = get_or_set_constant(api_name, Module.new)
     api.extend(API)
+    self.apis << api
     yield api if block_given?
+    create_scoped_constants(api)
+  end
+
+  def apis
+    @apis ||= []
+  end
+
+  def create_scoped_constants(api)
     api.const_set('RESOURCES', api.resources)
+    api.const_set('ALIASES', api.aliases)
     api.create_response_class
     api.create_parser_class
     api.create_request_class
     api
   end
 
+  def get_or_set_constant(const_name, klass, ancestor = nil)
+    if const_defined?(const_name)
+      const_get(const_name)
+    elsif ancestor
+      const_set(const_name, klass.new(ancestor))
+    else
+      const_set(const_name, klass)
+    end
+  end
+
   module API
-    attr_reader :base_uri
+    include LAPI
+
+    attr_reader :base_uri, :key
 
     def base_uri=(value)
       @base_uri = value
+    end
+
+    def key=(args = [])
+      return if args.empty?
+      @key = Param.new(args[0], args[1])
     end
 
     def resources
       @resources.dup.freeze
     end
 
+    def aliases
+      @aliases.dup.freeze
+    end
+
     def add_resource(plural, singular = nil, &block)
       @resources ||= []
+      @aliases ||= {}
       @resources << plural.to_sym
       add_inflection(plural, singular) if singular
       resource_builder = ResourceBuilder.new
       resource_builder.instance_eval(&block) if block
-      response_object = const_set(plural.to_s.classify, Class.new(ResponseObject))
+      resource_builder.aliases.each do |aka|
+        @aliases[aka] = plural
+      end
+      response_object = get_or_set_constant plural.to_s.classify,
+                                            Class,
+                                            ResponseObject
       response_object.const_set('API_MODULE', self)
       response_object.class_eval do
         lr_attr_accessor(*resource_builder.attributes)
@@ -62,6 +97,10 @@ module LAPI
           end
         end
         self.class.send(:attr_reader, *resource_builder.params)
+      end
+      resource_object.params << @key if @key
+      resource_builder.required.each do |name, value|
+        resource_object.params << Param.new(name, value)
       end
     end
 
@@ -113,11 +152,19 @@ module LAPI
         @collections ||= []
       end
 
+      def aliases
+        @aliases ||= []
+      end
+
       def scopes
         @scopes ||= {}
       end
 
-      def add_params(*args)
+      def required
+        @required_params ||= {}
+      end
+
+      def optional_params(*args)
         @params = args
       end
 
@@ -129,8 +176,16 @@ module LAPI
         @collections = args
       end
 
+      def add_aliases(*args)
+        @aliases = args
+      end
+
       def add_scopes(**args)
         @scopes = args
+      end
+
+      def required_params(**args)
+        @required_params = args
       end
     end
   end

@@ -10,6 +10,10 @@ module LAPI
       new_opts = opts.each_with_object({}) do |(key, val), memo|
         memo[key] = if resources.include?(key.to_sym)
                       objectify(key, val)
+                    elsif resources.include?(key.to_s.pluralize.to_sym) && val.is_a?(Hash)
+                      "#{api_module}::#{key.classify}".constantize.new(val)
+                    elsif aliases.include?(key.to_sym)
+                      "#{api_module}::#{aliases[key.to_sym].to_s.classify}".constantize.new(val)
                     else
                       val
                     end
@@ -27,6 +31,10 @@ module LAPI
 
     def resources
       self.class.const_get("#{api_module}::RESOURCES")
+    end
+
+    def aliases
+      self.class.const_get("#{api_module}::ALIASES")
     end
 
     def controller

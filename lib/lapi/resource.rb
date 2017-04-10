@@ -20,7 +20,7 @@ module LAPI
     end
 
     def id=(value)
-      @id = Param.new(:id, value, id: true)
+      @id = Param.new(:id, value, id: true) if value
     end
 
     def to_s

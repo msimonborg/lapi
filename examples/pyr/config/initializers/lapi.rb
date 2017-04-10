@@ -1,11 +1,14 @@
 # frozen_string_literal: true
+require 'lapi'
 
-LAPI.configure('pyr') do |config|
-  config.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
+LAPI.new :pyr do |api|
+  api.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
 
-  config.add_resource('reps') do
-    add_params 'address', 'lat', 'long'
+  api.add_resource('reps') do
+    optional_params 'address', 'lat', 'long'
     add_attributes :self,
+                   :state,
+                   :district,
                    :active,
                    :bioguide_id,
                    :official_full,
@@ -37,8 +40,9 @@ LAPI.configure('pyr') do |config|
                representatives: -> { where role: 'United States Representative' }
   end
 
-  config.add_resource('office_locations') do
+  api.add_resource('office_locations') do
     add_attributes :self,
+                   :rep,
                    :active,
                    :office_id,
                    :bioguide_id,
@@ -60,11 +64,50 @@ LAPI.configure('pyr') do |config|
                    :qr_code_link
   end
 
-  config.add_resource('v_cards')
+  api.add_resource('v_cards')
 
-  config.add_resource('zctas', 'zcta') do
-    add_params # some stuff
+  api.add_resource('zctas', 'zcta') do
+    optional_params # some stuff
     add_attributes # some stuff
     add_scopes # some stuff
+  end
+
+  api.add_resource('states') do
+    add_attributes :abbr, :state_code, :name
+  end
+end
+
+LAPI.new :airbnb do |api|
+  api.base_uri = 'https://api.airbnb.com/v2/'
+  api.key = :client_id, '3092nxybyb0otqw18e8nh5nty'
+
+  api.add_resource :reviews do
+    required_params role: 'all'
+    optional_params :listing_id, :locale, :currency
+
+    add_attributes :author, :author_id, :recipient, :reviewer
+  end
+
+  api.add_resource :listings do
+    required_params _format: 'v1_legacy_for_p3'
+
+    add_attributes :city
+  end
+
+  api.add_resource :users do
+    required_params _format: 'v1_legacy_show'
+    optional_params :locale, :currency
+
+    add_aliases :author, :recipient
+
+    add_attributes :first_name, :has_profile_pic, :id, :picture_url, :smart_name, :thumbnail_url, :recent_review
+  end
+
+  api.add_resource :recent_reviews do
+    add_attributes :review
+  end
+
+  api.add_resource :reviewers do
+    add_attributes :user
   end
 end

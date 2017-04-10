@@ -5,9 +5,11 @@ module LAPI
   # Parses the response body and returns an array of response_objects.
   class Parser
     def self.parse(body, controller)
+      klass = "#{api_module}::#{controller.to_s.classify}".constantize
       if body.keys.first == 'self'
-        klass = "#{api_module}::#{controller.to_s.classify}".constantize
         LazyRecord::Relation.new model: klass, array: [klass.new(body)]
+      elsif body.keys.first == controller.to_s.singularize
+        LazyRecord::Relation.new model: klass, array: [klass.new(body.values.first)]
       else
         reduce_body(body)
       end

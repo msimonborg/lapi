@@ -23,8 +23,12 @@ module LAPI
       @id = Param.new(:id, value, id: true) if value
     end
 
+    def params
+      @params ||= self.class.send(:params).dup
+    end
+
     def to_s
-      "#{controller}#{id}?#{self.class.send(:params).map(&:to_s).join('&')}"
+      "#{controller}#{id}?#{params.map(&:to_s).join('&')}"
     end
   end
 end

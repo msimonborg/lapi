@@ -93,7 +93,7 @@ module LAPI
         resource_builder.params.each do |param|
           define_method "#{param}=" do |value|
             instance_variable_set("@#{param}", Param.new(param.to_sym, value))
-            self.class.send(:params) << instance_variable_get("@#{param}")
+            self.send(:params) << instance_variable_get("@#{param}")
           end
         end
         self.class.send(:attr_reader, *resource_builder.params)

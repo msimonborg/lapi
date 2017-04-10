@@ -10,6 +10,8 @@ module LAPI
       new_opts = opts.each_with_object({}) do |(key, val), memo|
         memo[key] = if resources.include?(key.to_sym)
                       objectify(key, val)
+                    elsif aliases.include?(key.to_s.singularize.to_sym)
+                      objectify(aliases[key.to_s.singularize.to_sym], val)
                     elsif resources.include?(key.to_s.pluralize.to_sym) && val.is_a?(Hash)
                       "#{api_module}::#{key.classify}".constantize.new(val)
                     elsif aliases.include?(key.to_sym)
@@ -22,7 +24,7 @@ module LAPI
     end
 
     def objectify(name, array)
-      array.map { |obj| "#{api_module}::#{name.classify}".constantize.new(obj) }
+      array.map { |obj| "#{api_module}::#{name.to_s.classify}".constantize.new(obj) }
     end
 
     def api_module

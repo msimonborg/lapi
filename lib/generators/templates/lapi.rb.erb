@@ -1,12 +1,21 @@
 <%= "LAPI.new :#{name} do |api|" %>
-  <%= "api.base_uri = '#{uri}'" %>
-  <%= "api.key = :name, 'value'" %>
+<%= "  api.base_uri = '#{uri}'" %>
+<%= "  # api.key = :name, 'value'" %>
 <% resources.each do |resource| %>
-  <%= "api.add_resource :#{resource.to_sym} do" %>
-    <%= "required_params name: 'value', other_name: 'other_value'" %>
-    <%= "optional_params # 'comma', 'separated', 'params'" %>
-    <%= "add_attributes # 'comma', 'separated', 'attributes'" %>
-    <%= "add_scopes # scope_name: -> { where some_condition: 'is met' }," %>
-    <%= "           # second_scope: -> { where { |x| x.condition > 1_000_000 } }" %>
-  <%= "end" %><% end %>
+<%= "  api.add_resource :#{resource.to_sym} do" %>
+<%= "    #" %>
+<%= "    # required_params name: 'value', other_name: 'other_value'" %>
+<%= "    #" %>
+<%= "    # optional_params 'comma', 'separated', 'params'" %>
+<%= "    #" %>
+<%= "    # add_attributes 'comma', 'separated', 'attributes'" %>
+<%= "    #" %>
+<%= "    # add_collections 'plural'" %>
+<%= "    #" %>
+<%= "    # add_aliases 'singular'" %>
+<%= "    #" %>
+<%= "    # add_scopes scope_name: -> { where some_condition: 'is met' }," %>
+<%= "    #            second_scope: -> { where { |x| x.condition > 1_000_000 } }" %>
+<%= "  end" %>
+<% end %>
 <%= "end" %>

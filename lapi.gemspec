@@ -11,8 +11,12 @@ Gem::Specification.new do |spec|
   spec.authors       = ['M. Simon Borg']
   spec.email         = ['msimonborg@gmail.com']
 
-  spec.summary       = 'Lazy API. Extensible library for interfacing with external REST APIs.'
-  spec.description   = 'Lazy API. Extensible library for interfacing with external REST APIs.'
+  spec.summary       = 'Extensible and configurable library for interfacing with external REST APIs.'
+  spec.description   = 'Set up a pure ruby interface to an external API in one easy configuration file.'\
+    ' Abstract away the URI\'s, params, HTTP requests, and JSON data structures, replacing it with'\
+    ' Ruby block syntax, custom objects, method calls, scopes, and object associations. One configuration block'\
+    ' creates all the classes and methods that you need, saving you from writing files and files of'\
+    ' boilerplate code.'
   spec.homepage      = 'https://www.github.com/msimonborg/lapi'
   spec.license       = 'MIT'
 
@@ -34,7 +38,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'lazy_record', '~> 0.2.0', '>= 0.2.2'
+  spec.add_dependency 'lazy_record', '~> 0.3', '>= 0.3.0'
   spec.add_dependency 'httparty'
 
   spec.add_development_dependency 'pry'

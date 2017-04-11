@@ -4,8 +4,9 @@ require 'lapi'
 LAPI.new :pyr do |api|
   api.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
 
-  api.add_resource('reps') do
+  api.add_resource 'reps' do
     optional_params 'address', 'lat', 'long'
+
     add_attributes :self,
                    :state,
                    :district,
@@ -34,6 +35,7 @@ LAPI.new :pyr do |api|
                    :instagram_id
 
     add_collections 'office_locations'
+
     add_scopes democratic: -> { where party: 'Democrat' },
                republican: -> { where party: 'Republican' },
                senators: -> { where role: 'United States Senator' },
@@ -41,7 +43,7 @@ LAPI.new :pyr do |api|
                state: ->(name) { where { |x| x.state.name == name } }
   end
 
-  api.add_resource('office_locations') do
+  api.add_resource 'office_locations' do
     add_attributes :self,
                    :rep,
                    :active,
@@ -65,7 +67,7 @@ LAPI.new :pyr do |api|
                    :qr_code_link
   end
 
-  api.add_resource('v_cards')
+  api.add_resource 'v_cards'
 
   api.add_resource('zctas', 'zcta') do
     optional_params # some stuff
@@ -73,14 +75,18 @@ LAPI.new :pyr do |api|
     add_scopes # some stuff
   end
 
-  api.add_resource('states') do
-    add_attributes :abbr, :state_code, :name
+  api.add_resource 'states' do
+    add_attributes :self, :abbr, :state_code, :name
+  end
+
+  api.add_resource 'districts' do
+    add_attributes :self, :code, :state_code, :full_code
   end
 end
 
 LAPI.new :airbnb do |api|
   api.base_uri = 'https://api.airbnb.com/v2/'
-  api.key = :client_id, '3092nxybyb0otqw18e8nh5nty'
+  api.key      = :client_id, '3092nxybyb0otqw18e8nh5nty'
 
   api.add_resource :reviews do
     required_params role: 'all'

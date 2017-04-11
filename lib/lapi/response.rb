@@ -18,12 +18,16 @@ module LAPI
         @controller = resource.controller
         @url        = "#{base_url}#{resource}"
       elsif base_url
-        @controller = base_url.sub(self.class.const_get('BASE_URI'), '').split('/').first
+        @controller = base_url.sub(base_uri, '').split('/').first
         @url        = base_url
       elsif response_object
         @controller = response_object.controller
         @url        = response_object.self
       end
+    end
+
+    def base_uri
+      self.class.const_get('BASE_URI')
     end
 
     def fetch_and_parse_payload
@@ -35,7 +39,11 @@ module LAPI
     end
 
     def parse_objects
-      @objects = self.class.send(:const_get, 'API_MODULE::Parser').parse(body, controller)
+      @objects = parser.parse(body, controller)
+    end
+
+    def parser
+      self.class.send(:const_get, 'API_MODULE::Parser')
     end
   end
 end

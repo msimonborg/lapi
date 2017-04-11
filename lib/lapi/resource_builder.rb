@@ -24,7 +24,7 @@ module LAPI
       end
 
       def required
-        @required_params ||= {}
+        @required ||= {}
       end
 
       def optional_params(*args)
@@ -48,7 +48,7 @@ module LAPI
       end
 
       def required_params(**args)
-        @required_params = args
+        @required = args
       end
     end
   end

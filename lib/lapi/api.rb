@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'pry'
 module LAPI
   module API
     include LAPI
@@ -28,36 +28,51 @@ module LAPI
       @aliases ||= {}
       @resources << plural.to_sym
       add_inflection(plural, singular) if singular
+      resource_builder = create_resource_builder(plural, block)
+      create_response_object(plural, resource_builder)
+      create_resource_object(plural, resource_builder)
+    end
+
+    def create_resource_object(plural, resource_builder)
+      resource_object = set_or_get_constant plural.to_s.camelize,
+                                            Class.new(Resource)
+      resource_object.class_eval do
+        resource_builder.params.each do |param|
+          define_method "#{param}=" do |value|
+            instance_variable_set("@#{param}", Param.new(param.to_sym, value))
+            params << instance_variable_get("@#{param}")
+          end
+        end
+        self.class.send(:attr_reader, *resource_builder.params)
+      end
+      add_default_params(resource_builder, resource_object)
+    end
+
+    def add_default_params(resource_builder, resource_object)
+      resource_object.params << @key if @key
+      resource_builder.required.each do |name, value|
+        resource_object.params << Param.new(name, value)
+      end
+    end
+
+    def create_response_object(plural, resource_builder)
+      response_object = set_or_get_constant plural.to_s.classify,
+                                            Class.new(ResponseObject)
+      response_object.const_set('API_MODULE', self)
+      response_object.class_eval do
+        lr_attr_accessor(*resource_builder.attributes)
+        lr_has_many(*resource_builder.collections)
+        resource_builder.scopes.each { |k, v| lr_scope k, v }
+      end
+    end
+
+    def create_resource_builder(plural, block)
       resource_builder = ResourceBuilder.new
       resource_builder.instance_eval(&block) if block
       resource_builder.aliases.each do |aka|
         @aliases[aka] = plural
       end
-      response_object = get_or_set_constant plural.to_s.classify,
-                                            Class,
-                                            ResponseObject
-      response_object.const_set('API_MODULE', self)
-      response_object.class_eval do
-        lr_attr_accessor(*resource_builder.attributes)
-        lr_has_many(*resource_builder.collections)
-        resource_builder.scopes.each do |k, v|
-          lr_scope k, v
-        end
-      end
-      resource_object = const_set(plural.to_s.camelize, Class.new(Resource))
-      resource_object.class_eval do
-        resource_builder.params.each do |param|
-          define_method "#{param}=" do |value|
-            instance_variable_set("@#{param}", Param.new(param.to_sym, value))
-            self.send(:params) << instance_variable_get("@#{param}")
-          end
-        end
-        self.class.send(:attr_reader, *resource_builder.params)
-      end
-      resource_object.params << @key if @key
-      resource_builder.required.each do |name, value|
-        resource_object.params << Param.new(name, value)
-      end
+      resource_builder
     end
 
     def add_inflection(plural, singular)
@@ -75,18 +90,18 @@ module LAPI
     end
 
     def create_response_class
-      klass = const_set('Response', Class.new(Response))
+      klass = set_or_get_constant('Response', Class.new(Response))
       klass.const_set('BASE_URI', base_uri)
       klass.const_set('API_MODULE', self)
     end
 
     def create_parser_class
-      klass = const_set('Parser', Class.new(Parser))
+      klass = set_or_get_constant('Parser', Class.new(Parser))
       klass.const_set('API_MODULE', self)
     end
 
     def create_request_class
-      klass = const_set('Request', Class.new(Request))
+      klass = set_or_get_constant('Request', Class.new(Request))
       klass.const_set('API_MODULE', self)
     end
 

@@ -10,6 +10,11 @@ require 'lapi/response'
 require 'lapi/response_object'
 require 'lapi/version'
 
+# LAPI gives you a convenient interface for dealing with
+# external APIs.
+#
+# See examples/ for more detailed code examples.
+#
 # Configure a new API by calling LAPI.new(api_name, &block)
 #
 # The api_name argument can be a string or symbol.
@@ -23,6 +28,7 @@ require 'lapi/version'
 # base URI, access key, and the API resources and their properties.
 #
 # Basic usage:
+#
 # Lapi.new :airbnb do |api|
 #   api.base_uri = 'https://api.airbnb.com/v2/'
 #   api.key      = :client_id, 'secret_key'
@@ -89,13 +95,44 @@ require 'lapi/version'
 #
 # e.g.
 # api.add_resource :listings { add_attributes :user }
-# api.add_resource :user
+# api.add_resource :users
 #
-# This
+# By declaring :users as a resource LAPI will turn any data structure
+# with a "user" key into a User response object, as long as it is
+# declared as an attribute of that resource. Resources can be nested
+# as deep as you need them to be.
+#
+# LAPI will also recognize an array of :users at any level of nesting,
+# converting it into a collection of User response objects that will
+# respond to declared scope methods, so long as the key of the key value
+# pair is the expected plural form ("users"), and you add it as a collection.
+#
+# e.g.
+# api.add_resource :listings { add_collections :users }
+#
+# You need to explicitly declare the attributes you'd like to access on
+# each resource, otherwise they will be ignored.
 module LAPI
+  # LAPI.new 'name' do |api|
+  #   api.base_uri = 'www.example.com/'
+  #
+  #   api.add_resource 'resources' do
+  #     optional_params 'param'
+  #     add_attributes 'attribute'
+  #   end
+  # end
+  #
+  # response = LAPI::Name.call('resources') { |r| r.param = 'optional' }
+  #
+  # response.uri
+  # => "www.example.com/resources?param=optional"
+  # response.objects
+  # => #<LAPI::Name::ResourceRelation [#<LAPI::Name::Resource id: 1, attribute: "data">]>
+  # response.objects.first.attribute
+  # => "data"
+  #
   def self.new(name)
-    api_name = name.to_s.camelize
-    api = set_or_get_constant(api_name, Module.new)
+    api = set_or_get_constant(name.to_s.camelize, Module.new)
     api.extend(API)
     apis << api unless apis.include?(api)
     yield api if block_given?

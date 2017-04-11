@@ -69,11 +69,7 @@ LAPI.new :pyr do |api|
 
   api.add_resource 'v_cards'
 
-  api.add_resource('zctas', 'zcta') do
-    optional_params # some stuff
-    add_attributes # some stuff
-    add_scopes # some stuff
-  end
+  api.add_resource('zctas', 'zcta') { optional_params :reps }
 
   api.add_resource 'states' do
     add_attributes :self, :abbr, :state_code, :name
@@ -81,40 +77,5 @@ LAPI.new :pyr do |api|
 
   api.add_resource 'districts' do
     add_attributes :self, :code, :state_code, :full_code
-  end
-end
-
-LAPI.new :airbnb do |api|
-  api.base_uri = 'https://api.airbnb.com/v2/'
-  api.key      = :client_id, '3092nxybyb0otqw18e8nh5nty'
-
-  api.add_resource :reviews do
-    required_params role: 'all'
-    optional_params :listing_id, :locale, :currency
-
-    add_attributes :author, :author_id, :recipient, :reviewer
-  end
-
-  api.add_resource :listings do
-    required_params _format: 'v1_legacy_for_p3'
-
-    add_attributes :city
-  end
-
-  api.add_resource :users do
-    required_params _format: 'v1_legacy_show'
-    optional_params :locale, :currency
-
-    add_aliases :author, :recipient
-
-    add_attributes :first_name, :has_profile_pic, :id, :picture_url, :smart_name, :thumbnail_url, :recent_review
-  end
-
-  api.add_resource :recent_reviews do
-    add_attributes :review
-  end
-
-  api.add_resource :reviewers do
-    add_attributes :user
   end
 end

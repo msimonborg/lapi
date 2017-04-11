@@ -127,7 +127,7 @@ module LAPI
   # response.uri
   # => "www.example.com/resources?param=optional"
   # response.objects
-  # => #<LAPI::Name::ResourceRelation [#<LAPI::Name::Resource id: 1, attribute: "data">]>
+  # => #<LAPI::Name::ResourceRelation [#<LAPI::Name::Resource id: 1, attribute: "data">]> # rubocop:disable Style/LineLength
   # response.objects.first.attribute
   # => "data"
   #

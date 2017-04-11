@@ -36,6 +36,11 @@ module LAPI
     def create_resource_object(plural, resource_builder)
       resource_object = set_or_get_constant plural.to_s.camelize,
                                             Class.new(Resource)
+      create_resource_optional_params(resource_builder, resource_object)
+      add_default_params(resource_builder, resource_object)
+    end
+
+    def create_resource_optional_params(resource_builder, resource_object)
       resource_object.class_eval do
         resource_builder.params.each do |param|
           define_method "#{param}=" do |value|
@@ -45,7 +50,6 @@ module LAPI
         end
         self.class.send(:attr_reader, *resource_builder.params)
       end
-      add_default_params(resource_builder, resource_object)
     end
 
     def add_default_params(resource_builder, resource_object)

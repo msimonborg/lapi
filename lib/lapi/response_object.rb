@@ -14,24 +14,28 @@ module LAPI
     end
 
     def map_key_to_a_resource(key, val)
-      key_to_sym, singular_key_to_sym = key.to_sym, key.to_s.singularize.to_sym
+      key_to_sym, singular_key_to_sym = plural_and_singular_key_to_sym(key)
       if resources_include_key?(key)
         objectify(key, val)
       elsif aliases_include?(key_to_sym)
-        new_response_object(aliases[key_to_sym].to_s.classify, val)
+        new_response_object(aliases[key_to_sym], val)
       elsif aliases_include?(singular_key_to_sym)
         objectify(aliases[singular_key_to_sym], val)
       elsif resources_include_singular_object?(key, val)
-        new_response_object(key.classify, val)
+        new_response_object(key, val)
       end
+    end
+
+    def plural_and_singular_key_to_sym(key)
+      [key.to_sym, key.to_s.singularize.to_sym]
     end
 
     def aliases_include?(key)
       aliases.include?(key)
     end
 
-    def new_response_object(type, opts)
-      "#{api}::#{type}".constantize.new(opts)
+    def new_response_object(name, opts)
+      "#{api}::#{name.to_s.classify}".constantize.new(opts)
     end
 
     def resources_include_singular_object?(key, val)

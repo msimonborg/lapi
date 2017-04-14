@@ -119,7 +119,7 @@ module LAPI
         yield resource if block_given?
         request_object = { base_url: base_uri, resource: resource }
       end
-      self::Response.new request_object
+      self::Response.new(request_object).get
     end
   end
 end

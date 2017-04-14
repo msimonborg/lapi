@@ -9,8 +9,12 @@ module LAPI
 
     def initialize(base_url: nil, resource: nil, response_object: nil)
       assign_url_and_controller(base_url, resource, response_object)
+    end
+
+    def get
       fetch_and_parse_payload
       parse_objects if body.is_a? Hash
+      self
     end
 
     def assign_url_and_controller(base_url, resource, response_object)
@@ -43,7 +47,7 @@ module LAPI
     end
 
     def parser
-      self.class.send(:const_get, 'API_MODULE::Parser')
+      self.class.const_get('API_MODULE::Parser')
     end
   end
 end

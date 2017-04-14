@@ -51,15 +51,15 @@ module LAPI
     end
 
     def api
-      self.class.const_get('API_MODULE')
+      @api ||= self.class.const_get('API_MODULE')
     end
 
     def resources
-      self.class.const_get("#{api}::RESOURCES")
+      @resources ||= self.class.const_get("#{api}::RESOURCES")
     end
 
     def aliases
-      self.class.const_get("#{api}::ALIASES")
+      @aliases ||= self.class.const_get("#{api}::ALIASES")
     end
 
     def controller

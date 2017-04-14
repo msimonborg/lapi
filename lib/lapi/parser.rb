@@ -34,11 +34,11 @@ module LAPI
     end
 
     def self.api
-      const_get('API_MODULE')
+      @api ||= const_get('API_MODULE')
     end
 
     def self.resources
-      const_get("#{api}::RESOURCES")
+      @resources ||= const_get("#{api}::RESOURCES")
     end
   end
 end

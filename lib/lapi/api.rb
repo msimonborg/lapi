@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'faraday'
+require 'faraday_middleware'
+
 module LAPI
   module API
     include LAPI
@@ -14,7 +17,7 @@ module LAPI
       else
         resource = self::Request.build(resource, id)
         yield resource if block_given?
-        request_object = { base_url: base_uri, resource: resource }
+        request_object = { resource: resource }
       end
       self::Response.new(request_object).get
     end
@@ -119,9 +122,16 @@ module LAPI
     end
 
     def create_response_class
+      connection = Faraday.new url: base_uri do |conn|
+        conn.response :json, content_type: /\bjson$/
+        conn.response :yaml, content_type: /\byaml$/
+        conn.adapter Faraday.default_adapter
+      end
+
       klass = set_or_get_constant('Response', Class.new(Response))
       klass.const_set('BASE_URI', base_uri)
       klass.const_set('API_MODULE', self)
+      klass.const_set('API_CONN', connection)
     end
 
     def create_parser_class

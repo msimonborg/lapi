@@ -5,7 +5,7 @@ LAPI.new :pyr do |api|
   api.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
 
   api.add_resource 'reps' do
-    optional_params 'address', 'lat', 'long'
+    optional_params 'address', 'lat', 'long', 'republican', 'democrat', 'chamber'
 
     add_attributes :self,
                    :state,

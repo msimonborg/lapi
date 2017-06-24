@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require 'httparty'
+require 'faraday'
+require 'faraday_middleware'
 
 module LAPI
   # The object returned by a request call to the API.
   class Response
-    attr_reader :body, :url, :code, :message, :headers, :objects, :controller
+    attr_reader :body, :url, :code, :message, :headers, :objects, :path, :controller
 
     def initialize(base_url: nil, resource: nil, response_object: nil)
       assign_url_and_controller(base_url, resource, response_object)
@@ -18,15 +19,16 @@ module LAPI
     end
 
     def assign_url_and_controller(base_url, resource, response_object)
-      if base_url && resource
+      if resource
+        binding.pry
         @controller = resource.controller
-        @url        = "#{base_url}#{resource}"
+        @path       = resource.to_s
       elsif base_url
-        @controller = base_url.sub(base_uri, '').split('/').first
-        @url        = base_url
+        @path       = base_url.sub(base_uri, '')
+        @controller = path.split('/').first
       elsif response_object
         @controller = response_object.controller
-        @url        = response_object.self
+        @path       = response_object.self.sub(base_uri, '')
       end
     end
 
@@ -34,11 +36,16 @@ module LAPI
       self.class.const_get('BASE_URI')
     end
 
+    def api_conn
+      self.class.const_get('API_CONN')
+    end
+
     def fetch_and_parse_payload
-      payload  = HTTParty.get url
-      @body    = payload.parsed_response
-      @code    = payload.code
-      @message = payload.message
+      binding.pry
+      payload  = api_conn.get path
+      @body    = payload.body
+      @code    = payload.status
+      @message = payload.reason_phrase
       @headers = payload.headers
     end
 

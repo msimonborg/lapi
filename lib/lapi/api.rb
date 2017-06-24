@@ -6,6 +6,19 @@ module LAPI
 
     attr_reader :base_uri, :key
 
+    def call(resource, id = nil)
+      if resource.is_a?(LAPI::ResponseObject)
+        request_object = { response_object: resource }
+      elsif resource.to_s.include? base_uri
+        request_object = { base_url: resource }
+      else
+        resource = self::Request.build(resource, id)
+        yield resource if block_given?
+        request_object = { base_url: base_uri, resource: resource }
+      end
+      self::Response.new(request_object).get
+    end
+
     def base_uri=(value)
       @base_uri = value
     end
@@ -15,22 +28,42 @@ module LAPI
       @key = Param.new(args[0], args[1])
     end
 
+    def add_resource(plural, singular = nil, &block)
+      @resources ||= []
+      @aliases ||= {}
+      @resources << plural.to_sym
+      add_inflection(plural, singular) if singular
+      resource_builder = create_resource_builder(plural, &block)
+      create_response_object(plural, resource_builder)
+      create_resource_object(plural, resource_builder)
+    end
+
+    def create_scoped_constants
+      raise 'scoped constants already set' if constants_created?
+      const_set('RESOURCES', resources)
+      const_set('ALIASES', aliases)
+      create_response_class
+      create_parser_class
+      create_request_class
+      constants_created
+    end
+
+    def constants_created?
+      @constants_created ||= false
+    end
+
+    private
+
+    def constants_created
+      @constants_created = true
+    end
+
     def resources
       @resources.dup.freeze
     end
 
     def aliases
       @aliases.dup.freeze
-    end
-
-    def add_resource(plural, singular = nil, &block)
-      @resources ||= []
-      @aliases ||= {}
-      @resources << plural.to_sym
-      add_inflection(plural, singular) if singular
-      resource_builder = create_resource_builder(plural, block)
-      create_response_object(plural, resource_builder)
-      create_resource_object(plural, resource_builder)
     end
 
     def create_resource_object(plural, resource_builder)
@@ -64,13 +97,13 @@ module LAPI
                                             Class.new(ResponseObject)
       response_object.const_set('API_MODULE', self)
       response_object.class_eval do
-        lr_attr_accessor(*resource_builder.attributes)
+        attr_accessor(*resource_builder.attributes)
         lr_has_many(*resource_builder.collections)
-        resource_builder.scopes.each { |k, v| lr_scope k, v }
+        resource_builder.scopes.each { |name, method| lr_scope name, method }
       end
     end
 
-    def create_resource_builder(plural, block)
+    def create_resource_builder(plural, &block)
       resource_builder = ResourceBuilder.new
       resource_builder.instance_eval(&block) if block
       resource_builder.aliases.each do |aka|
@@ -83,14 +116,6 @@ module LAPI
       ActiveSupport::Inflector.inflections do |inflect|
         inflect.irregular singular, plural
       end
-    end
-
-    def create_scoped_constants
-      const_set('RESOURCES', resources)
-      const_set('ALIASES', aliases)
-      create_response_class
-      create_parser_class
-      create_request_class
     end
 
     def create_response_class
@@ -107,19 +132,6 @@ module LAPI
     def create_request_class
       klass = set_or_get_constant('Request', Class.new(Request))
       klass.const_set('API_MODULE', self)
-    end
-
-    def call(resource, id = nil)
-      if resource.is_a?(LAPI::ResponseObject)
-        request_object = { response_object: resource }
-      elsif resource.to_s.include? base_uri
-        request_object = { base_url: resource }
-      else
-        resource = self::Request.build(resource, id)
-        yield resource if block_given?
-        request_object = { base_url: base_uri, resource: resource }
-      end
-      self::Response.new(request_object).get
     end
   end
 end

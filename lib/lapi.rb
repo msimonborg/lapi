@@ -136,7 +136,7 @@ module LAPI
     api.extend(API)
     apis << api unless apis.include?(api)
     yield api if block_given?
-    api.create_scoped_constants
+    api.create_scoped_constants unless api.constants_created?
     api
   end
 

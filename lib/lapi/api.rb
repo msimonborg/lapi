@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
-require 'faraday'
-require 'faraday_middleware'
-
 module LAPI
   module API
-    include LAPI
-
     attr_reader :base_uri, :key
 
     def call(resource, id = nil)
@@ -35,6 +30,7 @@ module LAPI
       @resources ||= []
       @aliases ||= {}
       @resources << plural.to_sym
+      self.class.send(:define_method, plural) { |id = nil, &block| call(plural, id, &block) }
       add_inflection(plural, singular) if singular
       resource_builder = create_resource_builder(plural, &block)
       create_response_object(plural, resource_builder)
@@ -70,8 +66,8 @@ module LAPI
     end
 
     def create_resource_object(plural, resource_builder)
-      resource_object = set_or_get_constant plural.to_s.camelize,
-                                            Class.new(Resource)
+      resource_object = const_set plural.to_s.camelize,
+                                  Class.new(Resource)
       create_resource_optional_params(resource_builder, resource_object)
       add_default_params(resource_builder, resource_object)
     end
@@ -96,8 +92,8 @@ module LAPI
     end
 
     def create_response_object(plural, resource_builder)
-      response_object = set_or_get_constant plural.to_s.classify,
-                                            Class.new(ResponseObject)
+      response_object = const_set plural.to_s.classify,
+                                  Class.new(ResponseObject)
       response_object.const_set('API_MODULE', self)
       response_object.class_eval do
         attr_accessor(*resource_builder.attributes)
@@ -122,25 +118,18 @@ module LAPI
     end
 
     def create_response_class
-      connection = Faraday.new url: base_uri do |conn|
-        conn.response :json, content_type: /\bjson$/
-        conn.response :yaml, content_type: /\byaml$/
-        conn.adapter Faraday.default_adapter
-      end
-
-      klass = set_or_get_constant('Response', Class.new(Response))
+      klass = const_set('Response', Class.new(Response))
       klass.const_set('BASE_URI', base_uri)
       klass.const_set('API_MODULE', self)
-      klass.const_set('API_CONN', connection)
     end
 
     def create_parser_class
-      klass = set_or_get_constant('Parser', Class.new(Parser))
+      klass = const_set('Parser', Class.new(Parser))
       klass.const_set('API_MODULE', self)
     end
 
     def create_request_class
-      klass = set_or_get_constant('Request', Class.new(Request))
+      klass = const_set('Request', Class.new(Request))
       klass.const_set('API_MODULE', self)
     end
   end

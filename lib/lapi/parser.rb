@@ -6,16 +6,20 @@ module LAPI
   class Parser
     class << self
       def parse(body, controller)
+        klass = resource_class(controller)
         first_key, first_value = body.first
-        klass = "#{api}::#{controller.to_s.classify}".constantize
         case first_key
-        when 'self'
+        when *klass.public_attr_readers.map(&:to_s)
           LazyRecord::Relation.new model: klass, array: [klass.new(body)]
         when controller.to_s.singularize
           LazyRecord::Relation.new model: klass, array: [klass.new(first_value)]
         else
           reduce_body(body)
         end
+      end
+
+      def resource_class(controller)
+        "#{api}::#{controller.to_s.classify}".constantize
       end
 
       def reduce_body(body)

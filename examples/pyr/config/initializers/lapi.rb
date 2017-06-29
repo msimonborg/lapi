@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'lapi'
 
-LAPI.new :pyr do |api|
+LAPI.new 'PYR' do |api|
   api.base_uri = 'https://phone-your-rep.herokuapp.com/api/beta/'
 
   api.add_resource 'reps' do

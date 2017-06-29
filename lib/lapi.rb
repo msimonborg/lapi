@@ -133,8 +133,8 @@ module LAPI
   #
   def self.new(name)
     api = set_or_get_constant(name.to_s.camelize, Module.new)
-    api.extend(API)
     apis << api unless apis.include?(api)
+    api.extend(API)
     yield api if block_given?
     api.create_scoped_constants unless api.constants_created?
     api
@@ -144,9 +144,7 @@ module LAPI
     @apis ||= []
   end
 
-  module_function
-
-  def set_or_get_constant(const_name, object)
+  def self.set_or_get_constant(const_name, object)
     if const_defined?(const_name)
       const_get(const_name)
     else

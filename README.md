@@ -1,4 +1,4 @@
-# LAPI (lay-pee-ay)
+# LAPI (lay-pee-eye)
 
 Wish you had a convenient Ruby wrapper for an external API, but can't find one? Don't write one from scratch. Be Lazy. Use LAPI.
 
